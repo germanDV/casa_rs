@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Casa</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
+    textarea { width: 100%; height: 80px; margin-bottom: 0.5rem; }
+    button { padding: 0.4rem 1rem; }
+    ul { list-style: none; padding: 0; }
+    li { border-bottom: 1px solid #eee; padding: 0.6rem 0; }
+  </style>
+</head>
+<body>
+  <h1>📝 Notes</h1>
+
+  <form action="/notes" method="post">
+    <textarea name="body" placeholder="Write a note…" required></textarea>
+    <br />
+    <button type="submit">Add note</button>
+  </form>
+
+  <h2>All notes</h2>
+  {% if notes.is_empty() %}
+    <p><em>No notes yet.</em></p>
+  {% else %}
+    <ul>
+      {% for note in notes %}
+        <li><strong>#{{ note.id }}</strong> — {{ note.body }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</body>
+</html>
+
