@@ -12,21 +12,27 @@
   </style>
 </head>
 <body>
-  <h1>📝 Notes</h1>
+  <h1>📝 Cosas</h1>
 
-  <form action="/notes" method="post">
-    <textarea name="body" placeholder="Write a note…" required></textarea>
+  <form action="/cosas" method="post">
+    <input type="text" name="name" placeholder="Nombre" required />
     <br />
-    <button type="submit">Add note</button>
+    <textarea name="description" placeholder="Descripción" required></textarea>
+    <br />
+    <button type="submit">Crear Cosa</button>
   </form>
 
-  <h2>All notes</h2>
-  {% if notes.is_empty() %}
-    <p><em>No notes yet.</em></p>
+  <h2>Todas Las Cosas</h2>
+  {% if cosas.is_empty() %}
+    <p><em>No hay cosas todavía.</em></p>
   {% else %}
     <ul>
-      {% for note in notes %}
-        <li><strong>#{{ note.id }}</strong> — {{ note.body }}</li>
+      {% for cosa in cosas %}
+        <li>
+            <strong>#{{ cosa.id }}</strong> — {{ cosa.name }}
+            <p>{{ cosa.description }}</p>
+            <a href="/cosas/{{ cosa.id }}">Ver</a>
+        </li>
       {% endfor %}
     </ul>
   {% endif %}
