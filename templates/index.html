@@ -1,41 +1,33 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Casa</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; }
-    textarea { width: 100%; height: 80px; margin-bottom: 0.5rem; }
-    button { padding: 0.4rem 1rem; }
-    ul { list-style: none; padding: 0; }
-    li { border-bottom: 1px solid #eee; padding: 0.6rem 0; }
-  </style>
-</head>
-<body>
-  <h1>📝 Cosas</h1>
+{% extends "base.html" %}
 
-  <form action="/cosas" method="post">
-    <input type="text" name="name" placeholder="Nombre" required />
-    <br />
-    <textarea name="description" placeholder="Descripción" required></textarea>
-    <br />
-    <button type="submit">Crear Cosa</button>
-  </form>
+{% block content %}
+  <h1>📝 Cosas</h1>
 
   <h2>Todas Las Cosas</h2>
   {% if cosas.is_empty() %}
     <p><em>No hay cosas todavía.</em></p>
   {% else %}
-    <ul>
+    <ul class="card-grid">
       {% for cosa in cosas %}
-        <li>
-            <strong>#{{ cosa.id }}</strong> — {{ cosa.name }}
+        <li class="card">
+          <a href="/cosas/{{ cosa.id }}">
+            <h4>{{ cosa.name }}</h4>
             <p>{{ cosa.description }}</p>
-            <a href="/cosas/{{ cosa.id }}">Ver</a>
+          </a>
         </li>
       {% endfor %}
     </ul>
   {% endif %}
-</body>
-</html>
 
+  <details>
+      <summary>Agregar Cosa</summary>
+      <form action="/cosas" method="post" style="margin-top:20px;">
+        <input type="text" name="name" placeholder="Nombre" required />
+        <br />
+        <textarea name="description" placeholder="Descripción" required></textarea>
+        <br />
+        <button type="submit">Crear Cosa</button>
+      </form>
+  </details>
+
+{% endblock %}

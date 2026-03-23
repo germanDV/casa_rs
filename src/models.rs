@@ -14,3 +14,9 @@ pub struct Note {
     pub body: String,
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
+
+impl Note {
+    pub fn get_formatted_date(&self) -> String {
+        self.created_at.format("%d-%m-%Y").to_string()
+    }
+}
