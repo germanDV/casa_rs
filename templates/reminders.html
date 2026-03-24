@@ -1,4 +1,4 @@
-<h2>Recordatorios</h2>
+<h2>🗓️ Recordatorios</h2>
 
 {% if reminders.is_empty() %}
     <p><em>No hay recordatorios todavía.</em></p>
@@ -7,20 +7,28 @@
       {% for reminder in reminders %}
         <li class="card" id="reminder-{{ reminder.id }}">
             <details>
-                <summary
-                    style="display:flex;justify-content:space-between;"
-                    {%if reminder.done %}class="done"{% endif %}
-                >
-                    <span>
-                        🗓️ {{ reminder.get_formatted_due_date() }} - {{ reminder.title }}
-                    </span>
+                <summary style="display:flex;justify-content:space-between;">
+                    <div style="display:flex;align-items:center;">
+                        <input
+                            type="checkbox"
+                            name="done"
+                            value="true"
+                            {% if reminder.done %}checked{% endif %}
+                            onchange="toggleReminderDone({{ cosa.id }}, {{ reminder.id }}, this)" 
+                        />
+                        <span
+                            id="reminder-title-{{ reminder.id }}"
+                            style="margin-left:0.2rem;"
+                            {%if reminder.done %}class="done"{% endif %}
+                        >
+                            {{ reminder.get_formatted_due_date() }} - {{ reminder.title }}
+                        </span>
+                    </div>
+
                     <button type="button" onclick="deleteEntity({{ cosa.id }}, 'reminder', {{ reminder.id }})" class="icon-btn">🗑️</button>
                 </summary>
+
                 <p>{{ reminder.body }}</p>
-                <label class="checkbox-label">
-                    <input type="checkbox" name="done" value="true" {% if reminder.done %}checked{% endif %} />
-                    <span>Hecho</span>
-                </label>
             </details>
         </li>
       {% endfor %}
@@ -38,4 +46,21 @@
         <button type="submit">Guardar</button>
     </form>
 </details>
+
+<script>
+    async function toggleReminderDone(cosaId, reminderId, checkbox) {
+        try {
+            const response = await fetch(`/cosas/${cosaId}/reminders/${reminderId}/done`, {
+                method: 'PATCH',
+            });
+            if (!response.ok) {
+                checkbox.checked = !checkbox.checked;
+            } else {
+                document.getElementById(`reminder-title-${reminderId}`).classList.toggle('done');
+            }
+        } catch (e) {
+            checkbox.checked = !checkbox.checked;
+        }
+    }
+</script>
 

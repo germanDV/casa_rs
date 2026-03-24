@@ -9,7 +9,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::Redirect,
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
 };
 use sqlx::SqlitePool;
 
@@ -25,6 +25,10 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .route(
             "/cosas/{cosa_id}/reminders/{reminder_id}",
             delete(delete_reminder),
+        )
+        .route(
+            "/cosas/{cosa_id}/reminders/{reminder_id}/done",
+            patch(toggle_reminder_done),
         )
         .route("/cosas/{cosa_id}/contacts", post(create_contact))
         .route(
@@ -244,6 +248,19 @@ async fn delete_cosa(
         .await?;
 
     sqlx::query("DELETE FROM cosas WHERE id = ?")
+        .bind(&cosa_id)
+        .execute(&pool)
+        .await?;
+
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn toggle_reminder_done(
+    State(pool): State<SqlitePool>,
+    Path((cosa_id, reminder_id)): Path<(i64, i64)>,
+) -> Result<StatusCode, error::AppError> {
+    sqlx::query("UPDATE reminders SET done = 1-done WHERE id = ? AND cosa_id = ?")
+        .bind(&reminder_id)
         .bind(&cosa_id)
         .execute(&pool)
         .await?;
