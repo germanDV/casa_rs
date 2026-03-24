@@ -161,9 +161,34 @@
         color: var(--text-secondary);
         font-size: 0.8rem;
     }
+
+    .done {
+        text-decoration: line-through;
+    }
   </style>
 </head>
 <body>
-  {% block content %}{% endblock %}
+    {% block content %}{% endblock %}
+    <script>
+      async function deleteEntity(cosaId, entity, entityId) {
+        if (!confirm(`Eliminar ${entity}?`)) return;
+        const res = await fetch(`/cosas/${cosaId}/${entity}s/${entityId}`, { method: 'DELETE' });
+        if (res.ok) {
+            document.getElementById(`${entity}-${entityId}`).remove();
+        } else {
+            alert(`Error al eliminar ${entity}`);
+        }
+      }
+
+      async function deleteCosa(cosaId) {
+        if (!confirm('Eliminar cosa?')) return;
+        const res = await fetch(`/cosas/${cosaId}`, { method: 'DELETE' });
+        if (res.ok) {
+            window.location.href = '/';
+        } else {
+            alert('Error al eliminar cosa');
+        }
+      }
+    </script>
 </body>
 </html>

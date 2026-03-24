@@ -7,21 +7,31 @@ mod templates;
 use axum::{
     Form, Router,
     extract::{Path, State},
+    http::StatusCode,
     response::Redirect,
-    routing::{get, post},
+    routing::{delete, get, post},
 };
 use sqlx::SqlitePool;
 
 pub fn create_app(pool: SqlitePool) -> Router {
     Router::new()
         .route("/", get(list_cosas))
-        .route("/cosas/{cosa_id}", get(get_cosa))
         .route("/cosas", post(create_cosa))
+        .route("/cosas/{cosa_id}", get(get_cosa))
+        .route("/cosas/{cosa_id}", delete(delete_cosa))
         .route("/cosas/{cosa_id}/notes", post(create_note))
+        .route("/cosas/{cosa_id}/notes/{note_id}", delete(delete_note))
         .route("/cosas/{cosa_id}/reminders", post(create_reminder))
+        .route(
+            "/cosas/{cosa_id}/reminders/{reminder_id}",
+            delete(delete_reminder),
+        )
         .route("/cosas/{cosa_id}/contacts", post(create_contact))
+        .route(
+            "/cosas/{cosa_id}/contacts/{contact_id}",
+            delete(delete_contact),
+        )
         .with_state(pool)
-    // TODO: add routes to delete cosas, notes, reminders and contacts
 }
 
 async fn create_cosa(
@@ -176,6 +186,69 @@ async fn get_cosa(
         reminders,
         contacts,
     })
+}
+
+async fn delete_note(
+    State(pool): State<SqlitePool>,
+    Path((cosa_id, note_id)): Path<(i64, i64)>,
+) -> Result<StatusCode, error::AppError> {
+    sqlx::query("DELETE FROM notes WHERE id = ? AND cosa_id = ?")
+        .bind(&note_id)
+        .bind(&cosa_id)
+        .execute(&pool)
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn delete_reminder(
+    State(pool): State<SqlitePool>,
+    Path((cosa_id, reminder_id)): Path<(i64, i64)>,
+) -> Result<StatusCode, error::AppError> {
+    sqlx::query("DELETE FROM reminders WHERE id = ? AND cosa_id = ?")
+        .bind(&reminder_id)
+        .bind(&cosa_id)
+        .execute(&pool)
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn delete_contact(
+    State(pool): State<SqlitePool>,
+    Path((cosa_id, contact_id)): Path<(i64, i64)>,
+) -> Result<StatusCode, error::AppError> {
+    sqlx::query("DELETE FROM contacts WHERE id = ? AND cosa_id = ?")
+        .bind(&contact_id)
+        .bind(&cosa_id)
+        .execute(&pool)
+        .await?;
+    Ok(StatusCode::NO_CONTENT)
+}
+
+async fn delete_cosa(
+    State(pool): State<SqlitePool>,
+    Path(cosa_id): Path<i64>,
+) -> Result<StatusCode, error::AppError> {
+    sqlx::query("DELETE FROM notes WHERE cosa_id = ?")
+        .bind(&cosa_id)
+        .execute(&pool)
+        .await?;
+
+    sqlx::query("DELETE FROM reminders WHERE cosa_id = ?")
+        .bind(&cosa_id)
+        .execute(&pool)
+        .await?;
+
+    sqlx::query("DELETE FROM contacts WHERE cosa_id = ?")
+        .bind(&cosa_id)
+        .execute(&pool)
+        .await?;
+
+    sqlx::query("DELETE FROM cosas WHERE id = ?")
+        .bind(&cosa_id)
+        .execute(&pool)
+        .await?;
+
+    Ok(StatusCode::NO_CONTENT)
 }
 
 #[tokio::main]

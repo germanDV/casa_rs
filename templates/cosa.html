@@ -2,7 +2,14 @@
 
 {% block content %}
     <a href="/">&larr; Volver</a>
-    <h1>{{ cosa.name }} - {{ cosa.description }}</h1>
+    <h1>
+        {{ cosa.name }} - {{ cosa.description }}
+        <button
+            type="button"
+            onclick="deleteCosa({{ cosa.id }})"
+            style="background:none;border:none;cursor:pointer;font-size:1em;"
+        >🗑️</button>
+    </h1>
 
     <div class="dashboard-columns">
         <section class="dashboard-column">
@@ -12,11 +19,17 @@
             {% else %}
             <ul class="card-list">
               {% for note in notes %}
-                <li class="card">
+                <li class="card" id="note-{{ note.id }}">
                     <details>
-                        <summary>📝 {{ note.title }}</summary>
+                        <summary style="display:flex;justify-content:space-between;">
+                            <span>📝 {{ note.title }}</span>
+                            <button
+                                type="button"
+                                onclick="deleteEntity({{ cosa.id }}, 'note', {{ note.id }})"
+                                style="background:none;border:none;cursor:pointer;font-size:1em;"
+                            >🗑️</button>
+                        </summary>
                         <p>{{ note.body }}</p>
-                        <small>🆔 {{ note.id }}</small>
                     </details>
                 </li>
               {% endfor %}
@@ -42,17 +55,26 @@
             {% else %}
             <ul class="card-list">
               {% for reminder in reminders %}
-                <li class="card">
+                <li class="card" id="reminder-{{ reminder.id }}">
                     <details>
-                        <summary {%if reminder.done %}style="text-decoration: line-through;"{% endif %}>
-                            🗓️ {{ reminder.get_formatted_due_date() }} - {{ reminder.title }}
+                        <summary
+                            style="display:flex;justify-content:space-between;"
+                            {%if reminder.done %}class="done"{% endif %}
+                        >
+                            <span>
+                                🗓️ {{ reminder.get_formatted_due_date() }} - {{ reminder.title }}
+                            </span>
+                            <button
+                                type="button"
+                                onclick="deleteEntity({{ cosa.id }}, 'reminder', {{ reminder.id }})"
+                                style="background:none;border:none;cursor:pointer;font-size:1em;"
+                            >🗑️</button>
                         </summary>
                         <p>{{ reminder.body }}</p>
                         <label class="checkbox-label">
                             <input type="checkbox" name="done" value="true" {% if reminder.done %}checked{% endif %} />
                             <span>Hecho</span>
                         </label>
-                        <small>🆔 {{ reminder.id }}</small>
                     </details>
                 </li>
               {% endfor %}
@@ -80,9 +102,16 @@
         {% else %}
         <ul class="card-list">
           {% for contact in contacts %}
-            <li class="card contact">
+            <li class="card contact" id="contact-{{ contact.id }}">
                 <h4>👤 {{ contact.name }}</h4>
-                <h4>{{ contact.contact_details }}</h4>
+                <div>
+                    <span>{{ contact.contact_details }}</span>
+                    <button
+                        type="button"
+                        onclick="deleteEntity({{ cosa.id }}, 'contact', {{ contact.id }})"
+                        style="background:none;border:none;cursor:pointer;font-size:1em;"
+                    >🗑️</button>
+                </div>
             </li>
           {% endfor %}
         </ul>
