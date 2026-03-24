@@ -1,5 +1,5 @@
 <div class="contacts">
-    <h2>Contactos</h2>
+    <h2>👤 Contactos</h2>
 
     {% if contacts.is_empty() %}
         <p><em>No hay contactos todavía.</em></p>
@@ -7,7 +7,7 @@
         <ul class="card-list">
           {% for contact in contacts %}
             <li class="card contact" id="contact-{{ contact.id }}">
-                <h4>👤 {{ contact.name }}</h4>
+                <h4>{{ contact.name }}</h4>
                 <div>
                     <span>{{ contact.contact_details }}</span>
                     <button type="button" class="icon-btn" onclick="deleteEntity({{ cosa.id }}, 'contact', {{ contact.id }})">🗑️</button>

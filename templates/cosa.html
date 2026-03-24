@@ -2,10 +2,7 @@
 
 {% block content %}
     <a href="/">&larr; Volver</a>
-    <h1>
-        {{ cosa.name }} - {{ cosa.description }}
-        <button type="button" onclick="deleteCosa({{ cosa.id }})" class="icon-btn">🗑️</button>
-    </h1>
+    <h1>{{ cosa.name }} - {{ cosa.description }}</h1>
 
     <div class="dashboard-columns">
         <section class="dashboard-column">

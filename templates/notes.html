@@ -1,4 +1,4 @@
-<h2>Notas</h2>
+<h2>📝 Notas</h2>
 
 {% if notes.is_empty() %}
     <p><em>No hay notas todavía.</em></p>
@@ -8,7 +8,7 @@
         <li class="card" id="note-{{ note.id }}">
             <details>
                 <summary style="display:flex;justify-content:space-between;">
-                    <span>📝 {{ note.title }}</span>
+                    <span>{{ note.title }}</span>
                     <button type="button" class="icon-btn" onclick="deleteEntity({{ cosa.id }}, 'note', {{ note.id }})">🗑️</button>
                 </summary>
                 <p>{{ note.body }}</p>

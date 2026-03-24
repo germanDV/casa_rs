@@ -11,8 +11,11 @@
       {% for cosa in cosas %}
         <li class="card">
           <a href="/cosas/{{ cosa.id }}">
-            <h4>{{ cosa.name }}</h4>
-            <p>{{ cosa.description }}</p>
+              <div style="display:flex;justify-content:space-between;">
+                  <h4>{{ cosa.name }}</h4>
+                  <button type="button" onclick="deleteCosa({{ cosa.id }})" class="icon-btn">🗑️</button>
+              </div>
+              <p>{{ cosa.description }}</p>
           </a>
         </li>
       {% endfor %}

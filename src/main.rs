@@ -167,11 +167,19 @@ async fn get_cosa(
             .await
             .unwrap_or_default();
 
-    // TODO: ignore reminders that are done and are past their due date.
+    let yesterday = chrono::Utc::now()
+        .date_naive()
+        .pred_opt()
+        .unwrap()
+        .and_hms_opt(0, 0, 0)
+        .unwrap()
+        .and_utc();
+
     let reminders = sqlx::query_as::<_, models::Reminder>(
-        "SELECT id, title, body, due_at, done FROM reminders where cosa_id = ?",
+        "SELECT id, title, body, due_at, done FROM reminders WHERE cosa_id = ? AND (done = FALSE OR due_at >= ?)",
     )
     .bind(&cosa_id)
+    .bind(yesterday)
     .fetch_all(&pool)
     .await
     .unwrap_or_default();
@@ -264,7 +272,6 @@ async fn toggle_reminder_done(
         .bind(&cosa_id)
         .execute(&pool)
         .await?;
-
     Ok(StatusCode::NO_CONTENT)
 }
 

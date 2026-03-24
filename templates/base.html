@@ -172,6 +172,7 @@
 
 <body>
     {% block content %}{% endblock %}
+
     <script>
       async function deleteEntity(cosaId, entity, entityId) {
         if (!confirm(`Eliminar ${entity}?`)) return;
