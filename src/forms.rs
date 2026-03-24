@@ -11,3 +11,10 @@ pub struct CreateNote {
     pub title: String,
     pub body: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct CreateReminder {
+    pub title: String,
+    pub body: String,
+    pub due_at: String,
+}

@@ -4,11 +4,6 @@ mod forms;
 mod models;
 mod templates;
 
-use crate::db::create_pool;
-use crate::error::AppError;
-use crate::forms::{CreateCosa, CreateNote};
-use crate::models::{Cosa, Note};
-use crate::templates::{CosaTemplate, IndexTemplate};
 use axum::{
     Form, Router,
     extract::{Path, State},
@@ -23,21 +18,22 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .route("/cosas/{cosa_id}", get(get_cosa))
         .route("/cosas", post(create_cosa))
         .route("/cosas/{cosa_id}/notes", post(create_note))
+        .route("/cosas/{cosa_id}/reminders", post(create_reminder))
         .with_state(pool)
 }
 
 async fn create_cosa(
     State(pool): State<SqlitePool>,
-    Form(input): Form<CreateCosa>,
-) -> Result<Redirect, AppError> {
+    Form(input): Form<forms::CreateCosa>,
+) -> Result<Redirect, error::AppError> {
     let name = input.name.trim().to_string();
     if name.is_empty() {
-        return Err(AppError::BadRequest);
+        return Err(error::AppError::BadRequest);
     }
 
     let description = input.description.trim().to_string();
     if description.is_empty() {
-        return Err(AppError::BadRequest);
+        return Err(error::AppError::BadRequest);
     }
 
     sqlx::query("INSERT INTO cosas (name, description) VALUES (?, ?)")
@@ -52,62 +48,103 @@ async fn create_cosa(
 async fn create_note(
     State(pool): State<SqlitePool>,
     Path(cosa_id): Path<i64>,
-    Form(input): Form<CreateNote>,
-) -> Result<Redirect, AppError> {
+    Form(input): Form<forms::CreateNote>,
+) -> Result<Redirect, error::AppError> {
     let title = input.title.trim().to_string();
     if title.is_empty() {
-        return Err(AppError::BadRequest);
+        return Err(error::AppError::BadRequest);
     }
 
     let body = input.body.trim().to_string();
-    if body.is_empty() {
-        return Err(AppError::BadRequest);
-    }
 
-    sqlx::query("INSERT INTO notes (cosa_id, title, body, created_at) VALUES (?, ?, ?, ?)")
+    sqlx::query("INSERT INTO notes (cosa_id, title, body) VALUES (?, ?, ?)")
         .bind(&cosa_id)
         .bind(&title)
         .bind(&body)
-        .bind(chrono::Utc::now())
         .execute(&pool)
         .await?;
 
     Ok(Redirect::to(&format!("/cosas/{cosa_id}")))
 }
 
-async fn list_cosas(State(pool): State<SqlitePool>) -> IndexTemplate {
-    let cosas = sqlx::query_as::<_, Cosa>("SELECT id, name, description FROM cosas")
+async fn create_reminder(
+    State(pool): State<SqlitePool>,
+    Path(cosa_id): Path<i64>,
+    Form(input): Form<forms::CreateReminder>,
+) -> Result<Redirect, error::AppError> {
+    let title = input.title.trim().to_string();
+    if title.is_empty() {
+        return Err(error::AppError::BadRequest);
+    }
+
+    let body = input.body.trim().to_string();
+    if body.is_empty() {
+        return Err(error::AppError::BadRequest);
+    }
+
+    let due_at = chrono::NaiveDate::parse_from_str(&input.due_at, "%Y-%m-%d")
+        .map_err(|_| error::AppError::BadRequest)?
+        .and_hms_opt(0, 0, 0)
+        .unwrap()
+        .and_utc();
+
+    sqlx::query("INSERT INTO reminders (cosa_id, title, body, due_at) VALUES (?, ?, ?, ?)")
+        .bind(&cosa_id)
+        .bind(&title)
+        .bind(&body)
+        .bind(due_at)
+        .execute(&pool)
+        .await?;
+
+    Ok(Redirect::to(&format!("/cosas/{cosa_id}")))
+}
+
+async fn list_cosas(State(pool): State<SqlitePool>) -> templates::IndexTemplate {
+    let cosas = sqlx::query_as::<_, models::Cosa>("SELECT id, name, description FROM cosas")
         .fetch_all(&pool)
         .await
         .unwrap_or_default();
 
-    IndexTemplate { cosas }
+    templates::IndexTemplate { cosas }
 }
 
 async fn get_cosa(
     State(pool): State<SqlitePool>,
     Path(cosa_id): Path<i64>,
-) -> Result<CosaTemplate, AppError> {
-    let cosa = sqlx::query_as::<_, Cosa>("SELECT id, name, description FROM cosas WHERE id = ?")
-        .bind(&cosa_id)
-        .fetch_optional(&pool)
-        .await?
-        .ok_or(AppError::NotFound)?;
+) -> Result<templates::CosaTemplate, error::AppError> {
+    let cosa =
+        sqlx::query_as::<_, models::Cosa>("SELECT id, name, description FROM cosas WHERE id = ?")
+            .bind(&cosa_id)
+            .fetch_optional(&pool)
+            .await?
+            .ok_or(error::AppError::NotFound)?;
 
-    let notes = sqlx::query_as::<_, Note>(
-        "SELECT id, title, body, created_at FROM notes where cosa_id = ?",
+    let notes =
+        sqlx::query_as::<_, models::Note>("SELECT id, title, body FROM notes where cosa_id = ?")
+            .bind(&cosa_id)
+            .fetch_all(&pool)
+            .await
+            .unwrap_or_default();
+
+    // TODO: ignore reminders that are done and are past their due date.
+    let reminders = sqlx::query_as::<_, models::Reminder>(
+        "SELECT id, title, body, due_at, done FROM reminders where cosa_id = ?",
     )
     .bind(&cosa_id)
     .fetch_all(&pool)
     .await
     .unwrap_or_default();
 
-    Ok(CosaTemplate { cosa, notes })
+    Ok(templates::CosaTemplate {
+        cosa,
+        notes,
+        reminders,
+    })
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let pool = create_pool("sqlite://casa.db?mode=rwc").await?;
+    let pool = db::create_pool("sqlite://casa.db?mode=rwc").await?;
     let app = create_app(pool);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     println!("Listening on http://localhost:3000");
