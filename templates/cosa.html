@@ -4,128 +4,17 @@
     <a href="/">&larr; Volver</a>
     <h1>
         {{ cosa.name }} - {{ cosa.description }}
-        <button
-            type="button"
-            onclick="deleteCosa({{ cosa.id }})"
-            style="background:none;border:none;cursor:pointer;font-size:1em;"
-        >🗑️</button>
+        <button type="button" onclick="deleteCosa({{ cosa.id }})" class="icon-btn">🗑️</button>
     </h1>
 
     <div class="dashboard-columns">
         <section class="dashboard-column">
-            <h2>Notas</h2>
-            {% if notes.is_empty() %}
-            <p><em>No hay notas todavía.</em></p>
-            {% else %}
-            <ul class="card-list">
-              {% for note in notes %}
-                <li class="card" id="note-{{ note.id }}">
-                    <details>
-                        <summary style="display:flex;justify-content:space-between;">
-                            <span>📝 {{ note.title }}</span>
-                            <button
-                                type="button"
-                                onclick="deleteEntity({{ cosa.id }}, 'note', {{ note.id }})"
-                                style="background:none;border:none;cursor:pointer;font-size:1em;"
-                            >🗑️</button>
-                        </summary>
-                        <p>{{ note.body }}</p>
-                    </details>
-                </li>
-              {% endfor %}
-            </ul>
-            {% endif %}
-
-            <details>
-                <summary class="add-item">Nueva Nota</summary>
-                <form action="/cosas/{{ cosa.id }}/notes" method="post" style="margin-top:20px;">
-                    <input type="text" name="title" placeholder="Título" required />
-                    <br />
-                    <textarea name="body" placeholder="Nota"></textarea>
-                    <br />
-                    <button type="submit">Guardar</button>
-                </form>
-            </details>
+            {% include "notes.html" %}
         </section>
-
         <section class="dashboard-column">
-            <h2>Recordatorios</h2>
-            {% if reminders.is_empty() %}
-            <p><em>No hay recordatorios todavía.</em></p>
-            {% else %}
-            <ul class="card-list">
-              {% for reminder in reminders %}
-                <li class="card" id="reminder-{{ reminder.id }}">
-                    <details>
-                        <summary
-                            style="display:flex;justify-content:space-between;"
-                            {%if reminder.done %}class="done"{% endif %}
-                        >
-                            <span>
-                                🗓️ {{ reminder.get_formatted_due_date() }} - {{ reminder.title }}
-                            </span>
-                            <button
-                                type="button"
-                                onclick="deleteEntity({{ cosa.id }}, 'reminder', {{ reminder.id }})"
-                                style="background:none;border:none;cursor:pointer;font-size:1em;"
-                            >🗑️</button>
-                        </summary>
-                        <p>{{ reminder.body }}</p>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="done" value="true" {% if reminder.done %}checked{% endif %} />
-                            <span>Hecho</span>
-                        </label>
-                    </details>
-                </li>
-              {% endfor %}
-            </ul>
-            {% endif %}
-
-            <details>
-                <summary class="add-item">Nuevo Recordatorio</summary>
-                <form action="/cosas/{{ cosa.id }}/reminders" method="post" style="margin-top:20px;">
-                    <input type="text" name="title" placeholder="Título" required />
-                    <input type="date" name="due_at" placeholder="Fecha" required />
-                    <br />
-                    <textarea name="body" placeholder="Nota"></textarea>
-                    <br />
-                    <button type="submit">Guardar</button>
-                </form>
-            </details>
+            {% include "reminders.html" %}
         </section>
     </div>
 
-    <div class="contacts">
-        <h2>Contactos</h2>
-        {% if contacts.is_empty() %}
-        <p><em>No hay contactos todavía.</em></p>
-        {% else %}
-        <ul class="card-list">
-          {% for contact in contacts %}
-            <li class="card contact" id="contact-{{ contact.id }}">
-                <h4>👤 {{ contact.name }}</h4>
-                <div>
-                    <span>{{ contact.contact_details }}</span>
-                    <button
-                        type="button"
-                        onclick="deleteEntity({{ cosa.id }}, 'contact', {{ contact.id }})"
-                        style="background:none;border:none;cursor:pointer;font-size:1em;"
-                    >🗑️</button>
-                </div>
-            </li>
-          {% endfor %}
-        </ul>
-        {% endif %}
-
-        <details>
-            <summary class="add-item">Nuevo Contacto</summary>
-            <form action="/cosas/{{ cosa.id }}/contacts" method="post" style="margin-top:20px;">
-                <input type="text" name="name" placeholder="Nombre" required />
-                <br />
-                <input type="text" name="contact_details" placeholder="Teléfono, email, etc." required />
-                <br />
-                <button type="submit">Guardar</button>
-            </form>
-        </details>
-    </div>
+    {% include "contacts.html" %}
 {% endblock %}

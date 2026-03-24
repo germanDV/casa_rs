@@ -1,0 +1,41 @@
+<h2>Recordatorios</h2>
+
+{% if reminders.is_empty() %}
+    <p><em>No hay recordatorios todavía.</em></p>
+{% else %}
+    <ul class="card-list">
+      {% for reminder in reminders %}
+        <li class="card" id="reminder-{{ reminder.id }}">
+            <details>
+                <summary
+                    style="display:flex;justify-content:space-between;"
+                    {%if reminder.done %}class="done"{% endif %}
+                >
+                    <span>
+                        🗓️ {{ reminder.get_formatted_due_date() }} - {{ reminder.title }}
+                    </span>
+                    <button type="button" onclick="deleteEntity({{ cosa.id }}, 'reminder', {{ reminder.id }})" class="icon-btn">🗑️</button>
+                </summary>
+                <p>{{ reminder.body }}</p>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="done" value="true" {% if reminder.done %}checked{% endif %} />
+                    <span>Hecho</span>
+                </label>
+            </details>
+        </li>
+      {% endfor %}
+    </ul>
+{% endif %}
+
+<details>
+    <summary class="add-item">Nuevo Recordatorio</summary>
+    <form action="/cosas/{{ cosa.id }}/reminders" method="post" style="margin-top:20px;">
+        <input type="text" name="title" placeholder="Título" required />
+        <input type="date" name="due_at" placeholder="Fecha" required />
+        <br />
+        <textarea name="body" placeholder="Nota"></textarea>
+        <br />
+        <button type="submit">Guardar</button>
+    </form>
+</details>
+

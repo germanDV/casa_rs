@@ -1,0 +1,30 @@
+<h2>Notas</h2>
+
+{% if notes.is_empty() %}
+    <p><em>No hay notas todavía.</em></p>
+{% else %}
+    <ul class="card-list">
+      {% for note in notes %}
+        <li class="card" id="note-{{ note.id }}">
+            <details>
+                <summary style="display:flex;justify-content:space-between;">
+                    <span>📝 {{ note.title }}</span>
+                    <button type="button" class="icon-btn" onclick="deleteEntity({{ cosa.id }}, 'note', {{ note.id }})">🗑️</button>
+                </summary>
+                <p>{{ note.body }}</p>
+            </details>
+        </li>
+      {% endfor %}
+    </ul>
+{% endif %}
+
+<details>
+    <summary class="add-item">Nueva Nota</summary>
+    <form action="/cosas/{{ cosa.id }}/notes" method="post" style="margin-top:20px;">
+        <input type="text" name="title" placeholder="Título" required />
+        <br />
+        <textarea name="body" placeholder="Nota"></textarea>
+        <br />
+        <button type="submit">Guardar</button>
+    </form>
+</details>

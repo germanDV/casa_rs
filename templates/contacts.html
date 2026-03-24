@@ -1,0 +1,30 @@
+<div class="contacts">
+    <h2>Contactos</h2>
+
+    {% if contacts.is_empty() %}
+        <p><em>No hay contactos todavía.</em></p>
+    {% else %}
+        <ul class="card-list">
+          {% for contact in contacts %}
+            <li class="card contact" id="contact-{{ contact.id }}">
+                <h4>👤 {{ contact.name }}</h4>
+                <div>
+                    <span>{{ contact.contact_details }}</span>
+                    <button type="button" class="icon-btn" onclick="deleteEntity({{ cosa.id }}, 'contact', {{ contact.id }})">🗑️</button>
+                </div>
+            </li>
+          {% endfor %}
+        </ul>
+    {% endif %}
+
+    <details>
+        <summary class="add-item">Nuevo Contacto</summary>
+        <form action="/cosas/{{ cosa.id }}/contacts" method="post" style="margin-top:20px;">
+            <input type="text" name="name" placeholder="Nombre" required />
+            <br />
+            <input type="text" name="contact_details" placeholder="Teléfono, email, etc." required />
+            <br />
+            <button type="submit">Guardar</button>
+        </form>
+    </details>
+</div>

@@ -36,6 +36,8 @@
     a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
     a:hover { color: var(--accent-hover); }
 
+    p { overflow-wrap: break-word; }
+
     form { margin-bottom: 2rem; }
     input, textarea {
       width: 100%;
@@ -165,8 +167,16 @@
     .done {
         text-decoration: line-through;
     }
+
+    .icon-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+    }
   </style>
 </head>
+
 <body>
     {% block content %}{% endblock %}
     <script>
