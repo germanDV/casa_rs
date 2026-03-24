@@ -19,7 +19,9 @@ pub fn create_app(pool: SqlitePool) -> Router {
         .route("/cosas", post(create_cosa))
         .route("/cosas/{cosa_id}/notes", post(create_note))
         .route("/cosas/{cosa_id}/reminders", post(create_reminder))
+        .route("/cosas/{cosa_id}/contacts", post(create_contact))
         .with_state(pool)
+    // TODO: add routes to delete cosas, notes, reminders and contacts
 }
 
 async fn create_cosa(
@@ -99,6 +101,31 @@ async fn create_reminder(
     Ok(Redirect::to(&format!("/cosas/{cosa_id}")))
 }
 
+async fn create_contact(
+    State(pool): State<SqlitePool>,
+    Path(cosa_id): Path<i64>,
+    Form(input): Form<forms::CreateContact>,
+) -> Result<Redirect, error::AppError> {
+    let name = input.name.trim().to_string();
+    if name.is_empty() {
+        return Err(error::AppError::BadRequest);
+    }
+
+    let contact_details = input.contact_details.trim().to_string();
+    if contact_details.is_empty() {
+        return Err(error::AppError::BadRequest);
+    }
+
+    sqlx::query("INSERT INTO contacts (cosa_id, name, contact_details) VALUES (?, ?, ?)")
+        .bind(&cosa_id)
+        .bind(&name)
+        .bind(&contact_details)
+        .execute(&pool)
+        .await?;
+
+    Ok(Redirect::to(&format!("/cosas/{cosa_id}")))
+}
+
 async fn list_cosas(State(pool): State<SqlitePool>) -> templates::IndexTemplate {
     let cosas = sqlx::query_as::<_, models::Cosa>("SELECT id, name, description FROM cosas")
         .fetch_all(&pool)
@@ -135,10 +162,19 @@ async fn get_cosa(
     .await
     .unwrap_or_default();
 
+    let contacts = sqlx::query_as::<_, models::Contact>(
+        "SELECT id, name, contact_details FROM contacts where cosa_id = ?",
+    )
+    .bind(&cosa_id)
+    .fetch_all(&pool)
+    .await
+    .unwrap_or_default();
+
     Ok(templates::CosaTemplate {
         cosa,
         notes,
         reminders,
+        contacts,
     })
 }
 

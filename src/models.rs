@@ -28,3 +28,10 @@ impl Reminder {
         self.due_at.format("%d-%m-%Y").to_string()
     }
 }
+
+#[derive(Debug, Clone, FromRow)]
+pub struct Contact {
+    pub id: i64,
+    pub name: String,
+    pub contact_details: String,
+}

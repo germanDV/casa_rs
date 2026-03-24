@@ -1,4 +1,4 @@
-use crate::models::{Cosa, Note, Reminder};
+use crate::models::{Contact, Cosa, Note, Reminder};
 use askama::Template;
 use axum::response::{Html, IntoResponse, Response};
 
@@ -20,6 +20,7 @@ pub struct CosaTemplate {
     pub cosa: Cosa,
     pub notes: Vec<Note>,
     pub reminders: Vec<Reminder>,
+    pub contacts: Vec<Contact>,
 }
 
 impl IntoResponse for CosaTemplate {

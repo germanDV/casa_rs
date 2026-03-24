@@ -37,5 +37,16 @@ pub async fn create_pool(database_url: &str) -> anyhow::Result<SqlitePool> {
     .execute(&pool)
     .await?;
 
+    sqlx::query(
+        "CREATE TABLE IF NOT EXISTS contacts (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            cosa_id         INTEGER NOT NULL,
+            name            TEXT    NOT NULL,
+            contact_details TEXT    NOT NULL
+        )",
+    )
+    .execute(&pool)
+    .await?;
+
     Ok(pool)
 }

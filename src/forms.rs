@@ -18,3 +18,9 @@ pub struct CreateReminder {
     pub body: String,
     pub due_at: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct CreateContact {
+    pub name: String,
+    pub contact_details: String,
+}
