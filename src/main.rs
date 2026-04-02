@@ -1,3 +1,5 @@
+mod auth;
+mod config;
 mod db;
 mod error;
 mod forms;
@@ -7,15 +9,24 @@ mod templates;
 use axum::{
     Form, Router,
     extract::{Path, State},
-    http::StatusCode,
-    response::Redirect,
+    http::{StatusCode, header::SET_COOKIE},
+    response::{IntoResponse, Redirect},
     routing::{delete, get, patch, post},
 };
+use cookie::{Cookie, time};
 use sqlx::SqlitePool;
 
-pub fn create_app(pool: SqlitePool) -> Router {
+#[derive(Clone)]
+struct AppState {
+    pool: SqlitePool,
+    credentials: auth::Credentials,
+}
+
+fn create_app(app_state: AppState) -> Router {
     Router::new()
         .route("/", get(list_cosas))
+        .route("/login", get(login_page))
+        .route("/login", post(login))
         .route("/cosas", post(create_cosa))
         .route("/cosas/{cosa_id}", get(get_cosa))
         .route("/cosas/{cosa_id}", delete(delete_cosa))
@@ -35,11 +46,12 @@ pub fn create_app(pool: SqlitePool) -> Router {
             "/cosas/{cosa_id}/contacts/{contact_id}",
             delete(delete_contact),
         )
-        .with_state(pool)
+        .layer(axum::middleware::from_fn(auth::auth_middleware))
+        .with_state(app_state)
 }
 
 async fn create_cosa(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Form(input): Form<forms::CreateCosa>,
 ) -> Result<Redirect, error::AppError> {
     let name = input.name.trim().to_string();
@@ -62,7 +74,7 @@ async fn create_cosa(
 }
 
 async fn create_note(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Path(cosa_id): Path<i64>,
     Form(input): Form<forms::CreateNote>,
 ) -> Result<Redirect, error::AppError> {
@@ -84,7 +96,7 @@ async fn create_note(
 }
 
 async fn create_reminder(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Path(cosa_id): Path<i64>,
     Form(input): Form<forms::CreateReminder>,
 ) -> Result<Redirect, error::AppError> {
@@ -116,7 +128,7 @@ async fn create_reminder(
 }
 
 async fn create_contact(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Path(cosa_id): Path<i64>,
     Form(input): Form<forms::CreateContact>,
 ) -> Result<Redirect, error::AppError> {
@@ -140,7 +152,43 @@ async fn create_contact(
     Ok(Redirect::to(&format!("/cosas/{cosa_id}")))
 }
 
-async fn list_cosas(State(pool): State<SqlitePool>) -> templates::IndexTemplate {
+async fn login_page() -> templates::LoginTemplate {
+    templates::LoginTemplate {}
+}
+
+async fn login(
+    State(AppState { credentials, .. }): State<AppState>,
+    Form(input): Form<forms::Login>,
+) -> Result<impl IntoResponse, error::AppError> {
+    let email = input.email.trim().to_string();
+    if email.is_empty() {
+        return Err(error::AppError::BadRequest);
+    }
+
+    let password = input.password.trim().to_string();
+    if password.is_empty() {
+        return Err(error::AppError::BadRequest);
+    }
+
+    let auth_token =
+        auth::verify_credentials(credentials.clone(), auth::Credentials::new(email, password))?;
+
+    let cookie = Cookie::build(("auth_token", auth_token))
+        .http_only(true)
+        .secure(true)
+        .expires(time::OffsetDateTime::now_utc() + time::Duration::days(30))
+        .path("/");
+
+    let mut response = Redirect::to("/").into_response();
+
+    response
+        .headers_mut()
+        .insert(SET_COOKIE, cookie.to_string().parse().unwrap());
+
+    Ok(response)
+}
+
+async fn list_cosas(State(AppState { pool, .. }): State<AppState>) -> templates::IndexTemplate {
     let cosas = sqlx::query_as::<_, models::Cosa>("SELECT id, name, description FROM cosas")
         .fetch_all(&pool)
         .await
@@ -150,7 +198,7 @@ async fn list_cosas(State(pool): State<SqlitePool>) -> templates::IndexTemplate 
 }
 
 async fn get_cosa(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Path(cosa_id): Path<i64>,
 ) -> Result<templates::CosaTemplate, error::AppError> {
     let cosa =
@@ -201,7 +249,7 @@ async fn get_cosa(
 }
 
 async fn delete_note(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Path((cosa_id, note_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, error::AppError> {
     sqlx::query("DELETE FROM notes WHERE id = ? AND cosa_id = ?")
@@ -213,7 +261,7 @@ async fn delete_note(
 }
 
 async fn delete_reminder(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Path((cosa_id, reminder_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, error::AppError> {
     sqlx::query("DELETE FROM reminders WHERE id = ? AND cosa_id = ?")
@@ -225,7 +273,7 @@ async fn delete_reminder(
 }
 
 async fn delete_contact(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Path((cosa_id, contact_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, error::AppError> {
     sqlx::query("DELETE FROM contacts WHERE id = ? AND cosa_id = ?")
@@ -237,7 +285,7 @@ async fn delete_contact(
 }
 
 async fn delete_cosa(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Path(cosa_id): Path<i64>,
 ) -> Result<StatusCode, error::AppError> {
     sqlx::query("DELETE FROM notes WHERE cosa_id = ?")
@@ -264,7 +312,7 @@ async fn delete_cosa(
 }
 
 async fn toggle_reminder_done(
-    State(pool): State<SqlitePool>,
+    State(AppState { pool, .. }): State<AppState>,
     Path((cosa_id, reminder_id)): Path<(i64, i64)>,
 ) -> Result<StatusCode, error::AppError> {
     sqlx::query("UPDATE reminders SET done = 1-done WHERE id = ? AND cosa_id = ?")
@@ -277,10 +325,17 @@ async fn toggle_reminder_done(
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let pool = db::create_pool("sqlite://casa.db?mode=rwc").await?;
-    let app = create_app(pool);
+    config::init();
+    let cfg = config::get();
+
+    let app = create_app(AppState {
+        pool: db::create_pool("sqlite://casa.db?mode=rwc").await?,
+        credentials: auth::Credentials::new(cfg.login_email.clone(), cfg.password.clone()),
+    });
+
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     println!("Listening on http://localhost:3000");
     axum::serve(listener, app).await?;
+
     Ok(())
 }

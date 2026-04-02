@@ -7,6 +7,7 @@ pub enum AppError {
     BadRequest,
     NotFound,
     InternalError,
+    Unauthorized,
 }
 
 impl IntoResponse for AppError {
@@ -15,6 +16,7 @@ impl IntoResponse for AppError {
             AppError::BadRequest => StatusCode::BAD_REQUEST,
             AppError::NotFound => StatusCode::NOT_FOUND,
             AppError::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
+            AppError::Unauthorized => StatusCode::UNAUTHORIZED,
         };
         (status, status.to_string()).into_response()
     }

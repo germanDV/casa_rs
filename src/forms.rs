@@ -24,3 +24,9 @@ pub struct CreateContact {
     pub name: String,
     pub contact_details: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct Login {
+    pub email: String,
+    pub password: String,
+}

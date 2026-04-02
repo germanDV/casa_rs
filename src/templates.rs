@@ -28,3 +28,13 @@ impl IntoResponse for CosaTemplate {
         Html(self.render().unwrap()).into_response()
     }
 }
+
+#[derive(Template)]
+#[template(path = "login.html")]
+pub struct LoginTemplate {}
+
+impl IntoResponse for LoginTemplate {
+    fn into_response(self) -> Response {
+        Html(self.render().unwrap()).into_response()
+    }
+}
