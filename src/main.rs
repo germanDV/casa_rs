@@ -334,12 +334,13 @@ async fn main() -> anyhow::Result<()> {
     let cfg = config::get();
 
     let app = create_app(AppState {
-        pool: db::create_pool("sqlite://casa.db?mode=rwc").await?,
+        pool: db::create_pool(&cfg.database_url).await?,
         credentials: auth::Credentials::new(cfg.login_email.clone(), cfg.password.clone()),
     });
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
-    println!("Listening on http://localhost:3000");
+    let port = &cfg.port;
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await?;
+    println!("Listening on http://0.0.0.0:{port}");
     axum::serve(listener, app).await?;
 
     Ok(())
