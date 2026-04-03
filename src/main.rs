@@ -24,6 +24,7 @@ struct AppState {
 
 fn create_app(app_state: AppState) -> Router {
     Router::new()
+        .route("/health", get(health_check))
         .route("/", get(list_cosas))
         .route("/login", get(login_page))
         .route("/login", post(login))
@@ -48,6 +49,10 @@ fn create_app(app_state: AppState) -> Router {
         )
         .layer(axum::middleware::from_fn(auth::auth_middleware))
         .with_state(app_state)
+}
+
+async fn health_check() -> StatusCode {
+    StatusCode::OK
 }
 
 async fn create_cosa(

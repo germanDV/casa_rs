@@ -86,6 +86,10 @@ fn redirect_to_login_clearing_cookie() -> Response {
 pub async fn auth_middleware(request: Request, next: Next) -> Response {
     let path = request.uri().path();
 
+    if path == "/health" {
+        return next.run(request).await;
+    }
+
     let auth_token: Option<String> = request
         .headers()
         .get("cookie")
