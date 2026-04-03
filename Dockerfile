@@ -5,7 +5,7 @@ RUN cargo build --release
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /data
+RUN mkdir -p /data && chmod 777 /data
 WORKDIR /app
 COPY --from=builder /app/target/release/casa .
 COPY --from=builder /app/templates ./templates
